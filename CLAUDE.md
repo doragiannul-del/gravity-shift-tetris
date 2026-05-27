@@ -51,3 +51,8 @@ Avoid:
 - premature optimization
 - overly complex patterns
 - large changes without explanation
+
+Testing:
+- Add tests for important game logic and edge cases
+- Prefer testing pure logic over UI rendering where possible
+- Explain why important tests were chosen
