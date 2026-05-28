@@ -7,6 +7,7 @@ A Tetris variant where gravity direction can shift mid-game. Built with React, T
 This project was built as part of an exploration into AI-assisted software engineering workflows using Claude Code.
 
 The goal is not only to build a game, but also to practice:
+
 - iterative architecture design
 - human-in-the-loop AI collaboration
 - incremental development
@@ -66,16 +67,37 @@ npx tsc --noEmit --project client/tsconfig.json
 npx tsc --noEmit --project server/tsconfig.json
 ```
 
+## Testing
+
+The engine layer is tested with Vitest.
+
+Current coverage focuses on:
+
+- gravity direction vectors
+- piece rotation and wrapping
+- shape lookup
+- board merging
+- immutability guarantees
+
+Run tests:
+
+```bash
+npm run test --workspace=client
+```
+
 ## Milestones
 
 | \# | Milestone | Status |
 | --- | --- | --- |
 | 1 | Scaffold — Vite client + Express server | ✅ Done |
-| 2 | Static board — grid renders in React | Pending |
-| 3 | Pieces + rotation — tetromino shapes, spawn, rotate | Pending |
+| 2 | Static board — grid renders in React | ✅ Done |
+| 3 | Pieces + rotation — tetromino shapes, spawn, rotate | ✅ Done |
 | 4 | Standard fall — game loop tick, pieces land and lock | Pending |
 | 5 | Line clearing — detect and clear full rows | Pending |
 | 6 | Gravity shift — direction state shifts mid-game | Pending |
 | 7 | Scoring + HUD — points, level, speed scaling | Pending |
 | 8 | Server + leaderboard — scores API, persist results | Pending |
 | 9 | Polish — ghost piece, next-piece preview, game-over screen | Pending |
+
+```
+```

@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm install
+
+      - name: Type-check client
+        run: npx tsc --noEmit --project client/tsconfig.json
+
+      - name: Type-check server
+        run: npx tsc --noEmit --project server/tsconfig.json
+
+      - name: Run client tests
+        run: npm run test --workspace=client
