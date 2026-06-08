@@ -13,6 +13,19 @@ export function createEmptyBoard(): BoardState {
   )
 }
 
+// Returns true if all filled cells of the piece are in-bounds and over empty cells.
+export function isValidPosition(board: BoardState, piece: PieceState): boolean {
+  const shape = getShape(piece.type, piece.rotation)
+  return shape.every((shapeRow, dr) =>
+    shapeRow.every((cell, dc) => {
+      if (cell === 0) return true
+      const r = piece.row + dr
+      const c = piece.col + dc
+      return r >= 0 && r < BOARD_ROWS && c >= 0 && c < BOARD_COLS && board[r][c] === 'empty'
+    })
+  )
+}
+
 // Returns a new board with the piece's filled cells overlaid.
 // Does not mutate the source board; safe to call every render.
 export function mergePieceOnBoard(board: BoardState, piece: PieceState): BoardState {

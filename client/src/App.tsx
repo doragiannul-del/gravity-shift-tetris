@@ -1,27 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
 import Board from './components/Board'
-import { createEmptyBoard, mergePieceOnBoard } from './engine/board'
-import { spawnPiece, rotatePiece } from './engine/piece'
-
-const emptyBoard = createEmptyBoard()
+import { mergePieceOnBoard } from './engine/board'
+import { useGameLoop } from './hooks/useGameLoop'
+import { useInput } from './hooks/useInput'
 
 function App() {
-  const [piece, setPiece] = useState(() => spawnPiece('T'))
+  const { state, dispatch } = useGameLoop()
+  useInput(dispatch)
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'ArrowUp') {
-      setPiece(p => rotatePiece(p, 'cw'))
-    } else if (e.key === 'z' || e.key === 'Z') {
-      setPiece(p => rotatePiece(p, 'ccw'))
-    }
-  }, [])
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
-
-  const displayBoard = mergePieceOnBoard(emptyBoard, piece)
+  const displayBoard = mergePieceOnBoard(state.board, state.activePiece)
 
   return (
     <div
@@ -36,10 +22,13 @@ function App() {
         gap: '1rem',
       }}
     >
-      <p style={{ margin: 0, color: '#555', fontSize: '0.875rem' }}>
-        ↑ rotate CW · Z rotate CCW
-      </p>
+      {state.status === 'over' && (
+        <p style={{ margin: 0, color: '#f00', fontWeight: 'bold' }}>Game Over</p>
+      )}
       <Board board={displayBoard} />
+      <p style={{ margin: 0, color: '#555', fontSize: '0.875rem' }}>
+        ← → move · ↑ rotate CW · Z rotate CCW · ↓ soft drop
+      </p>
     </div>
   )
 }

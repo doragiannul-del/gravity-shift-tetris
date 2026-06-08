@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createEmptyBoard, mergePieceOnBoard, BOARD_ROWS, BOARD_COLS } from '../board'
+import { createEmptyBoard, mergePieceOnBoard, isValidPosition, BOARD_ROWS, BOARD_COLS } from '../board'
 import { spawnPiece, COLORS } from '../piece'
 
 describe('createEmptyBoard', () => {
@@ -48,5 +48,40 @@ describe('mergePieceOnBoard', () => {
     // I piece at row -1: some cells fall above the board
     const piece = { ...spawnPiece('I'), row: -1 }
     expect(() => mergePieceOnBoard(createEmptyBoard(), piece)).not.toThrow()
+  })
+})
+
+describe('isValidPosition', () => {
+  it('returns true for a freshly spawned piece on an empty board', () => {
+    expect(isValidPosition(createEmptyBoard(), spawnPiece('T'))).toBe(true)
+  })
+
+  it('returns false when piece is out of bounds to the left', () => {
+    const piece = { ...spawnPiece('T'), col: -1 }
+    expect(isValidPosition(createEmptyBoard(), piece)).toBe(false)
+  })
+
+  it('returns false when piece is out of bounds to the right', () => {
+    const piece = { ...spawnPiece('T'), col: BOARD_COLS }
+    expect(isValidPosition(createEmptyBoard(), piece)).toBe(false)
+  })
+
+  it('returns false when piece is below the floor', () => {
+    const piece = { ...spawnPiece('T'), row: BOARD_ROWS }
+    expect(isValidPosition(createEmptyBoard(), piece)).toBe(false)
+  })
+
+  it('returns false when piece overlaps a locked cell', () => {
+    const board = createEmptyBoard()
+    // Place a locked cell directly where T would occupy
+    board[1][4] = '#ff0000'
+    const piece = spawnPiece('T') // T fills (1,4) among others
+    expect(isValidPosition(board, piece)).toBe(false)
+  })
+
+  it('returns true when piece is above the board (partial spawn)', () => {
+    // Cells above row 0 are allowed — they just aren't rendered
+    const piece = { ...spawnPiece('I'), row: -1 }
+    expect(isValidPosition(createEmptyBoard(), piece)).toBe(true)
   })
 })
