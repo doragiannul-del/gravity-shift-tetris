@@ -9,6 +9,7 @@ function playingState(overrides: Partial<GameState> = {}): GameState {
     activePiece: spawnPiece('T'),
     gravityDirection: 'down',
     status: 'playing',
+    linesCleared: 0,
     ...overrides,
   }
 }
@@ -39,10 +40,12 @@ describe('gameReducer — TICK', () => {
   })
 
   it('transitions to "over" when spawn is blocked', () => {
-    // Fill the top rows so no new piece can spawn
+    // (1,4) is in the spawn footprint of all 7 piece types at their default
+    // columns (col 3 for most, col 4 for O). One blocked cell is enough to
+    // prevent any piece from spawning. It must NOT form a full row so that
+    // clearLines doesn't remove it before the spawn check.
     const board = createEmptyBoard()
-    board[0] = Array(10).fill('#ff0000')
-    board[1] = Array(10).fill('#ff0000')
+    board[1][4] = '#ff0000'
     const piece = { ...spawnPiece('T'), row: BOARD_ROWS - 2 }
     const state = playingState({ board, activePiece: piece })
     const next = gameReducer(state, { type: 'TICK' })
@@ -159,6 +162,28 @@ describe('createInitialState', () => {
   it('starts with an empty board', () => {
     const { board } = createInitialState()
     board.forEach(row => row.forEach(cell => expect(cell).toBe('empty')))
+  })
+
+  it('starts with linesCleared of 0', () => {
+    expect(createInitialState().linesCleared).toBe(0)
+  })
+})
+
+describe('gameReducer — line clearing integration', () => {
+  it('increments linesCleared when a full row is cleared on lock', () => {
+    // Fill the bottom row except the cells T will occupy when it locks,
+    // then position T so locking it completes the row.
+    // T R0 at (row=BOARD_ROWS-2, col=3) locks cells at row BOARD_ROWS-1: cols 3,4,5
+    // Pre-fill row BOARD_ROWS-1 everywhere except cols 3,4,5
+    const board = createEmptyBoard()
+    const lockRow = BOARD_ROWS - 1
+    for (let c = 0; c < BOARD_COLS; c++) {
+      if (c < 3 || c > 5) board[lockRow][c] = '#ff0000'
+    }
+    const piece = { ...spawnPiece('T'), row: BOARD_ROWS - 2 }
+    const state = playingState({ board, activePiece: piece, linesCleared: 0 })
+    const next = gameReducer(state, { type: 'TICK' })
+    expect(next.linesCleared).toBe(1)
   })
 })
 

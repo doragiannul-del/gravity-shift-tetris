@@ -26,6 +26,16 @@ export function isValidPosition(board: BoardState, piece: PieceState): boolean {
   )
 }
 
+// Removes full rows and prepends the same number of empty rows at the top.
+export function clearLines(board: BoardState): { board: BoardState; linesCleared: number } {
+  const remaining = board.filter(row => row.some(cell => cell === 'empty'))
+  const linesCleared = BOARD_ROWS - remaining.length
+  const emptyRows = Array.from({ length: linesCleared }, () =>
+    Array<CellState>(BOARD_COLS).fill('empty')
+  )
+  return { board: [...emptyRows, ...remaining], linesCleared }
+}
+
 // Returns a new board with the piece's filled cells overlaid.
 // Does not mutate the source board; safe to call every render.
 export function mergePieceOnBoard(board: BoardState, piece: PieceState): BoardState {

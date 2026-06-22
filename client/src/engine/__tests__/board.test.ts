@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createEmptyBoard, mergePieceOnBoard, isValidPosition, BOARD_ROWS, BOARD_COLS } from '../board'
+import { createEmptyBoard, mergePieceOnBoard, isValidPosition, clearLines, BOARD_ROWS, BOARD_COLS } from '../board'
 import { spawnPiece, COLORS } from '../piece'
 
 describe('createEmptyBoard', () => {
@@ -83,5 +83,58 @@ describe('isValidPosition', () => {
     // Cells above row 0 are allowed — they just aren't rendered
     const piece = { ...spawnPiece('I'), row: -1 }
     expect(isValidPosition(createEmptyBoard(), piece)).toBe(true)
+  })
+})
+
+describe('clearLines', () => {
+  it('returns the board unchanged when no rows are full', () => {
+    const board = createEmptyBoard()
+    const { board: result, linesCleared } = clearLines(board)
+    expect(linesCleared).toBe(0)
+    expect(result).toEqual(board)
+  })
+
+  it('does not clear a partially filled row', () => {
+    const board = createEmptyBoard()
+    board[BOARD_ROWS - 1][0] = '#ff0000' // only one cell filled
+    const { linesCleared } = clearLines(board)
+    expect(linesCleared).toBe(0)
+  })
+
+  it('clears a single full row and prepends one empty row', () => {
+    const board = createEmptyBoard()
+    board[BOARD_ROWS - 1] = Array(BOARD_COLS).fill('#ff0000')
+    const { board: result, linesCleared } = clearLines(board)
+    expect(linesCleared).toBe(1)
+    expect(result[0]).toEqual(Array(BOARD_COLS).fill('empty'))
+    expect(result[BOARD_ROWS - 1].every(c => c === 'empty')).toBe(true)
+  })
+
+  it('clears four full rows at once (Tetris)', () => {
+    const board = createEmptyBoard()
+    for (let r = BOARD_ROWS - 4; r < BOARD_ROWS; r++) {
+      board[r] = Array(BOARD_COLS).fill('#00f0f0')
+    }
+    const { board: result, linesCleared } = clearLines(board)
+    expect(linesCleared).toBe(4)
+    result.slice(0, 4).forEach(row =>
+      expect(row).toEqual(Array(BOARD_COLS).fill('empty'))
+    )
+  })
+
+  it('always returns a board with BOARD_ROWS rows', () => {
+    const board = createEmptyBoard()
+    board[BOARD_ROWS - 1] = Array(BOARD_COLS).fill('#ff0000')
+    board[BOARD_ROWS - 2] = Array(BOARD_COLS).fill('#ff0000')
+    const { board: result } = clearLines(board)
+    expect(result.length).toBe(BOARD_ROWS)
+  })
+
+  it('does not mutate the source board', () => {
+    const board = createEmptyBoard()
+    board[BOARD_ROWS - 1] = Array(BOARD_COLS).fill('#ff0000')
+    const originalRow = board[BOARD_ROWS - 1]
+    clearLines(board)
+    expect(board[BOARD_ROWS - 1]).toBe(originalRow)
   })
 })
