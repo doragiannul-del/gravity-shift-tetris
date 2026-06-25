@@ -27,6 +27,10 @@ export function useInput(dispatch: Dispatch) {
         case 'G':
           dispatch({ type: 'SHIFT_GRAVITY' })
           break
+        case 'r':
+        case 'R':
+          dispatch({ type: 'RESTART' })
+          break
       }
     }
 

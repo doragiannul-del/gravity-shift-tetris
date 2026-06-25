@@ -7,6 +7,7 @@ export type GameStatus = 'idle' | 'playing' | 'over'
 export interface GameState {
   board: BoardState
   activePiece: PieceState
+  nextPiece: PieceState
   gravityDirection: GravityDirection
   status: GameStatus
   score: number
@@ -26,6 +27,7 @@ export type GameAction =
   | { type: 'ROTATE'; direction: 'cw' | 'ccw' }
   | { type: 'SOFT_DROP' }
   | { type: 'SHIFT_GRAVITY' }
+  | { type: 'RESTART' }
 
 const GRAVITY_CYCLE: Record<GravityDirection, GravityDirection> = {
   down: 'left',
@@ -38,14 +40,13 @@ function randomPieceType() {
   return PIECE_TYPES[Math.floor(Math.random() * PIECE_TYPES.length)]
 }
 
-// Lock the active piece, clear any full lines, then spawn the next piece.
+// Lock the active piece, clear any full lines, then promote nextPiece to active.
 // If the spawn position is already occupied, the game is over.
 function lockAndSpawn(state: GameState): GameState {
   const lockedBoard = mergePieceOnBoard(state.board, state.activePiece)
   const { board: clearedBoard, linesCleared } = clearLines(lockedBoard, state.gravityDirection)
-  const next = spawnPiece(randomPieceType())
 
-  if (!isValidPosition(clearedBoard, next)) {
+  if (!isValidPosition(clearedBoard, state.nextPiece)) {
     return { ...state, board: clearedBoard, status: 'over' }
   }
 
@@ -55,7 +56,8 @@ function lockAndSpawn(state: GameState): GameState {
   return {
     ...state,
     board: clearedBoard,
-    activePiece: next,
+    activePiece: state.nextPiece,
+    nextPiece: spawnPiece(randomPieceType()),
     score: state.score + scoreForLines(linesCleared, state.level),
     level,
     linesCleared: totalLines,
@@ -63,6 +65,7 @@ function lockAndSpawn(state: GameState): GameState {
 }
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
+  if (action.type === 'RESTART') return createInitialState()
   if (state.status !== 'playing') return state
 
   const { activePiece, board } = state
@@ -104,5 +107,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 export function createInitialState(): GameState {
   const board = createEmptyBoard()
   const activePiece = spawnPiece(randomPieceType())
-  return { board, activePiece, gravityDirection: 'down', status: 'playing', score: 0, level: 1, linesCleared: 0 }
+  const nextPiece = spawnPiece(randomPieceType())
+  return { board, activePiece, nextPiece, gravityDirection: 'down', status: 'playing', score: 0, level: 1, linesCleared: 0 }
 }

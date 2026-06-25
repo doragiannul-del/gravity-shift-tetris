@@ -7,6 +7,7 @@ function playingState(overrides: Partial<GameState> = {}): GameState {
   return {
     board: createEmptyBoard(),
     activePiece: spawnPiece('T'),
+    nextPiece: spawnPiece('I'),
     gravityDirection: 'down',
     status: 'playing',
     score: 0,
@@ -263,6 +264,51 @@ describe('gameReducer — line clearing integration', () => {
     const next = gameReducer(state, { type: 'TICK' })
     expect(next.linesCleared).toBe(10)
     expect(next.level).toBe(2)
+  })
+
+  it('promotes nextPiece to activePiece on lock', () => {
+    const next = spawnPiece('I')
+    const piece = { ...spawnPiece('T'), row: BOARD_ROWS - 2 }
+    const state = playingState({ activePiece: piece, nextPiece: next })
+    const result = gameReducer(state, { type: 'TICK' })
+    expect(result.activePiece.type).toBe('I')
+  })
+
+  it('generates a new nextPiece after lock', () => {
+    const piece = { ...spawnPiece('T'), row: BOARD_ROWS - 2 }
+    const state = playingState({ activePiece: piece, nextPiece: spawnPiece('I') })
+    const result = gameReducer(state, { type: 'TICK' })
+    // nextPiece must exist and be a valid spawned piece
+    expect(result.nextPiece).toBeDefined()
+    expect(result.nextPiece.row).toBe(0)
+  })
+})
+
+describe('gameReducer — RESTART', () => {
+  it('resets status to playing from over', () => {
+    const state = playingState({ status: 'over' })
+    expect(gameReducer(state, { type: 'RESTART' }).status).toBe('playing')
+  })
+
+  it('resets score, level, and linesCleared to initial values', () => {
+    const state = playingState({ score: 9999, level: 5, linesCleared: 42, status: 'over' })
+    const next = gameReducer(state, { type: 'RESTART' })
+    expect(next.score).toBe(0)
+    expect(next.level).toBe(1)
+    expect(next.linesCleared).toBe(0)
+  })
+
+  it('resets the board to empty', () => {
+    const board = createEmptyBoard()
+    board[0][0] = '#ff0000'
+    const state = playingState({ board, status: 'over' })
+    const next = gameReducer(state, { type: 'RESTART' })
+    next.board.forEach(row => row.forEach(cell => expect(cell).toBe('empty')))
+  })
+
+  it('works from playing state too', () => {
+    const state = playingState({ score: 500 })
+    expect(gameReducer(state, { type: 'RESTART' }).score).toBe(0)
   })
 })
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createEmptyBoard, mergePieceOnBoard, isValidPosition, clearLines, BOARD_ROWS, BOARD_COLS } from '../board'
+import { createEmptyBoard, mergePieceOnBoard, isValidPosition, clearLines, getGhostPiece, withOpacity, BOARD_ROWS, BOARD_COLS } from '../board'
 import { spawnPiece, COLORS } from '../piece'
 
 describe('createEmptyBoard', () => {
@@ -190,5 +190,54 @@ describe('clearLines', () => {
     // col 0 is the new empty column prepended on the left
     result.forEach(row => expect(row[0]).toBe('empty'))
     result.forEach(row => expect(row[BOARD_COLS - 1]).toBe('empty'))
+  })
+})
+
+describe('withOpacity', () => {
+  it('appends correct hex byte for 0% opacity', () => {
+    expect(withOpacity('#ff0000', 0)).toBe('#ff000000')
+  })
+
+  it('appends correct hex byte for 100% opacity', () => {
+    expect(withOpacity('#ff0000', 1)).toBe('#ff0000ff')
+  })
+
+  it('appends correct hex byte for 30% opacity (ghost color)', () => {
+    // 0.3 * 255 = 76.5 → rounds to 77 = 0x4d
+    expect(withOpacity('#00f0f0', 0.3)).toBe('#00f0f04d')
+  })
+})
+
+describe('getGhostPiece', () => {
+  it('returns a piece at the floor when the board is empty (down gravity)', () => {
+    const piece = spawnPiece('T') // row 0
+    const ghost = getGhostPiece(createEmptyBoard(), piece, 'down')
+    // T R0: last filled row is index 1 in the bounding box ([1,1,1]).
+    // Ghost lands when row+1 = BOARD_ROWS-1, so ghost.row = BOARD_ROWS-2.
+    expect(ghost.row).toBe(BOARD_ROWS - 2)
+    expect(ghost.col).toBe(piece.col)
+    expect(ghost.rotation).toBe(piece.rotation)
+  })
+
+  it('is blocked by a locked cell above the floor', () => {
+    const board = createEmptyBoard()
+    // Block row 10 — T's last filled row is row+1, so ghost stops at row 8.
+    for (let c = 0; c < BOARD_COLS; c++) board[10][c] = '#ff0000'
+    const piece = spawnPiece('T')
+    const ghost = getGhostPiece(board, piece, 'down')
+    expect(ghost.row).toBe(8)
+  })
+
+  it('returns the piece unchanged when it is already at the floor', () => {
+    const piece = { ...spawnPiece('T'), row: BOARD_ROWS - 2 }
+    const ghost = getGhostPiece(createEmptyBoard(), piece, 'down')
+    expect(ghost.row).toBe(piece.row)
+  })
+
+  it('respects left gravity direction', () => {
+    const piece = { ...spawnPiece('T'), row: 5, col: 5 }
+    const ghost = getGhostPiece(createEmptyBoard(), piece, 'left')
+    // Piece falls left; ghost col should be less than starting col
+    expect(ghost.col).toBeLessThan(piece.col)
   })
 })

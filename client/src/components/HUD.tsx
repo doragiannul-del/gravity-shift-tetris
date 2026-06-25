@@ -1,5 +1,6 @@
 import { GameState } from '../engine/gameLoop'
 import { GravityDirection } from '../engine/gravity'
+import NextPiece from './NextPiece'
 
 const GRAVITY_ARROW: Record<GravityDirection, string> = {
   down: '↓',
@@ -32,6 +33,12 @@ function HUD({ state }: Props) {
       <Stat label="Level" value={state.level} />
       <Stat label="Lines" value={state.linesCleared} />
       <Stat label="Gravity" value={GRAVITY_ARROW[state.gravityDirection]} />
+      <div>
+        <div style={{ fontSize: '0.7rem', color: '#555', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.4rem' }}>
+          Next
+        </div>
+        <NextPiece piece={state.nextPiece} />
+      </div>
     </div>
   )
 }

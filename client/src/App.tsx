@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import Board from './components/Board'
 import HUD from './components/HUD'
-import { mergePieceOnBoard } from './engine/board'
+import { mergePieceOnBoard, getGhostPiece, withOpacity } from './engine/board'
+import { COLORS } from './engine/piece'
 import { useGameLoop } from './hooks/useGameLoop'
 import { useInput } from './hooks/useInput'
 import { postScore, getScores, ScoreEntry } from './api/scores'
@@ -17,7 +18,11 @@ function App() {
   const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([])
   const [submitError, setSubmitError] = useState('')
 
-  const displayBoard = mergePieceOnBoard(state.board, state.activePiece)
+  // Build display board: ghost first (faded), then active piece on top.
+  const ghost = getGhostPiece(state.board, state.activePiece, state.gravityDirection)
+  const ghostColor = withOpacity(COLORS[state.activePiece.type], 0.3)
+  const boardWithGhost = mergePieceOnBoard(state.board, { ...ghost }, ghostColor)
+  const displayBoard = mergePieceOnBoard(boardWithGhost, state.activePiece)
 
   async function handleSubmitScore(e: React.FormEvent) {
     e.preventDefault()
@@ -56,8 +61,11 @@ function App() {
 
       {state.status === 'over' && (
         <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
-          <p style={{ color: '#f44', fontWeight: 'bold', fontSize: '1.25rem', margin: '0 0 1rem' }}>
+          <p style={{ color: '#f44', fontWeight: 'bold', fontSize: '1.25rem', margin: '0 0 0.5rem' }}>
             Game Over — {state.score} pts
+          </p>
+          <p style={{ color: '#555', fontSize: '0.75rem', margin: '0 0 1rem' }}>
+            Press R to restart
           </p>
 
           {submitStatus === 'idle' || submitStatus === 'error' ? (
@@ -89,7 +97,7 @@ function App() {
                   fontSize: '0.875rem',
                 }}
               >
-                Submit
+                Submit score
               </button>
             </form>
           ) : null}
@@ -124,7 +132,7 @@ function App() {
 
       {state.status !== 'over' && (
         <p style={{ margin: 0, color: '#555', fontSize: '0.75rem' }}>
-          ← → move · ↑ rotate CW · Z rotate CCW · ↓ soft drop · G shift gravity
+          ← → move · ↑ rotate CW · Z rotate CCW · ↓ soft drop · G gravity · R restart
         </p>
       )}
     </div>

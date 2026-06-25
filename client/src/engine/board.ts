@@ -1,5 +1,5 @@
 import { PieceState, getShape, COLORS } from './piece'
-import { GravityDirection } from './gravity'
+import { GravityDirection, getGravityVector } from './gravity'
 
 export const BOARD_COLS = 10
 export const BOARD_ROWS = 20
@@ -69,11 +69,33 @@ export function clearLines(
   return { board: next, linesCleared }
 }
 
+// Appends 'AA' hex opacity suffix to a 6-digit hex color string (e.g. '#ff0000' → '#ff000050').
+export function withOpacity(hex: string, opacity: number): string {
+  const byte = Math.round(opacity * 255).toString(16).padStart(2, '0')
+  return `${hex}${byte}`
+}
+
+// Drops the piece as far as it can go in the gravity direction and returns the landing position.
+export function getGhostPiece(
+  board: BoardState,
+  piece: PieceState,
+  direction: GravityDirection,
+): PieceState {
+  const vec = getGravityVector(direction)
+  let ghost = piece
+  while (true) {
+    const next = { ...ghost, row: ghost.row + vec.dr, col: ghost.col + vec.dc }
+    if (!isValidPosition(board, next)) return ghost
+    ghost = next
+  }
+}
+
 // Returns a new board with the piece's filled cells overlaid.
 // Does not mutate the source board; safe to call every render.
-export function mergePieceOnBoard(board: BoardState, piece: PieceState): BoardState {
+// Pass colorOverride to render the piece in a different color (e.g. ghost piece).
+export function mergePieceOnBoard(board: BoardState, piece: PieceState, colorOverride?: string): BoardState {
   const shape = getShape(piece.type, piece.rotation)
-  const color = COLORS[piece.type]
+  const color = colorOverride ?? COLORS[piece.type]
   const next = board.map(row => [...row]) as BoardState
 
   shape.forEach((shapeRow, dr) => {
