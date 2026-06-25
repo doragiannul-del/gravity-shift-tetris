@@ -9,7 +9,15 @@ export interface GameState {
   activePiece: PieceState
   gravityDirection: GravityDirection
   status: GameStatus
+  score: number
+  level: number
   linesCleared: number
+}
+
+const LINE_POINTS: Record<number, number> = { 1: 100, 2: 300, 3: 500, 4: 800 }
+
+export function scoreForLines(lines: number, level: number): number {
+  return (LINE_POINTS[lines] ?? 0) * level
 }
 
 export type GameAction =
@@ -41,11 +49,16 @@ function lockAndSpawn(state: GameState): GameState {
     return { ...state, board: clearedBoard, status: 'over' }
   }
 
+  const totalLines = state.linesCleared + linesCleared
+  const level = Math.floor(totalLines / 10) + 1
+
   return {
     ...state,
     board: clearedBoard,
     activePiece: next,
-    linesCleared: state.linesCleared + linesCleared,
+    score: state.score + scoreForLines(linesCleared, state.level),
+    level,
+    linesCleared: totalLines,
   }
 }
 
@@ -91,5 +104,5 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 export function createInitialState(): GameState {
   const board = createEmptyBoard()
   const activePiece = spawnPiece(randomPieceType())
-  return { board, activePiece, gravityDirection: 'down', status: 'playing', linesCleared: 0 }
+  return { board, activePiece, gravityDirection: 'down', status: 'playing', score: 0, level: 1, linesCleared: 0 }
 }

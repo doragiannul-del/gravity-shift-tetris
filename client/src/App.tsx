@@ -1,4 +1,5 @@
 import Board from './components/Board'
+import HUD from './components/HUD'
 import { mergePieceOnBoard } from './engine/board'
 import { useGameLoop } from './hooks/useGameLoop'
 import { useInput } from './hooks/useInput'
@@ -15,6 +16,7 @@ function App() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
         padding: '2rem',
         minHeight: '100vh',
         backgroundColor: '#0a0a0a',
@@ -23,10 +25,15 @@ function App() {
       }}
     >
       {state.status === 'over' && (
-        <p style={{ margin: 0, color: '#f00', fontWeight: 'bold' }}>Game Over</p>
+        <p style={{ margin: 0, color: '#f44', fontWeight: 'bold', fontSize: '1.25rem' }}>
+          Game Over
+        </p>
       )}
-      <Board board={displayBoard} />
-      <p style={{ margin: 0, color: '#555', fontSize: '0.875rem' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '2rem' }}>
+        <Board board={displayBoard} />
+        <HUD state={state} />
+      </div>
+      <p style={{ margin: 0, color: '#555', fontSize: '0.75rem' }}>
         ← → move · ↑ rotate CW · Z rotate CCW · ↓ soft drop · G shift gravity
       </p>
     </div>

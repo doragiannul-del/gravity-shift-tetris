@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { gameReducer, createInitialState, GameState } from '../gameLoop'
+import { gameReducer, createInitialState, scoreForLines, GameState } from '../gameLoop'
 import { createEmptyBoard, BOARD_COLS, BOARD_ROWS } from '../board'
 import { spawnPiece } from '../piece'
 
@@ -9,6 +9,8 @@ function playingState(overrides: Partial<GameState> = {}): GameState {
     activePiece: spawnPiece('T'),
     gravityDirection: 'down',
     status: 'playing',
+    score: 0,
+    level: 1,
     linesCleared: 0,
     ...overrides,
   }
@@ -192,21 +194,75 @@ describe('gameReducer — SHIFT_GRAVITY', () => {
   })
 })
 
+describe('scoreForLines', () => {
+  it('returns 0 for 0 lines', () => {
+    expect(scoreForLines(0, 1)).toBe(0)
+  })
+
+  it('returns 100 for 1 line at level 1', () => {
+    expect(scoreForLines(1, 1)).toBe(100)
+  })
+
+  it('returns 300 for 2 lines at level 1', () => {
+    expect(scoreForLines(2, 1)).toBe(300)
+  })
+
+  it('returns 500 for 3 lines at level 1', () => {
+    expect(scoreForLines(3, 1)).toBe(500)
+  })
+
+  it('returns 800 for 4 lines (Tetris) at level 1', () => {
+    expect(scoreForLines(4, 1)).toBe(800)
+  })
+
+  it('scales with level — 1 line at level 3 = 300', () => {
+    expect(scoreForLines(1, 3)).toBe(300)
+  })
+
+  it('scales with level — 4 lines at level 2 = 1600', () => {
+    expect(scoreForLines(4, 2)).toBe(1600)
+  })
+})
+
 describe('gameReducer — line clearing integration', () => {
-  it('increments linesCleared when a full row is cleared on lock', () => {
-    // Fill the bottom row except the cells T will occupy when it locks,
-    // then position T so locking it completes the row.
-    // T R0 at (row=BOARD_ROWS-2, col=3) locks cells at row BOARD_ROWS-1: cols 3,4,5
-    // Pre-fill row BOARD_ROWS-1 everywhere except cols 3,4,5
+  // Shared board setup: pre-fill the bottom row except the 3 cols T will lock into.
+  // T R0 at (row=BOARD_ROWS-2, col=3) locks into row BOARD_ROWS-1 at cols 3, 4, 5.
+  function boardWithAlmostFullBottom() {
     const board = createEmptyBoard()
-    const lockRow = BOARD_ROWS - 1
     for (let c = 0; c < BOARD_COLS; c++) {
-      if (c < 3 || c > 5) board[lockRow][c] = '#ff0000'
+      if (c < 3 || c > 5) board[BOARD_ROWS - 1][c] = '#ff0000'
     }
+    return board
+  }
+
+  it('increments linesCleared when a full row is cleared on lock', () => {
     const piece = { ...spawnPiece('T'), row: BOARD_ROWS - 2 }
-    const state = playingState({ board, activePiece: piece, linesCleared: 0 })
+    const state = playingState({ board: boardWithAlmostFullBottom(), activePiece: piece })
     const next = gameReducer(state, { type: 'TICK' })
     expect(next.linesCleared).toBe(1)
+  })
+
+  it('awards score at the current level on lock', () => {
+    const piece = { ...spawnPiece('T'), row: BOARD_ROWS - 2 }
+    const state = playingState({ board: boardWithAlmostFullBottom(), activePiece: piece, level: 1, score: 0 })
+    const next = gameReducer(state, { type: 'TICK' })
+    expect(next.score).toBe(100) // 1 line × level 1
+  })
+
+  it('scores at level 2 correctly', () => {
+    const piece = { ...spawnPiece('T'), row: BOARD_ROWS - 2 }
+    const state = playingState({ board: boardWithAlmostFullBottom(), activePiece: piece, level: 2, score: 0 })
+    const next = gameReducer(state, { type: 'TICK' })
+    expect(next.score).toBe(200) // 1 line × level 2
+  })
+
+  it('advances level after 10 total lines cleared', () => {
+    const piece = { ...spawnPiece('T'), row: BOARD_ROWS - 2 }
+    // Already at 9 lines — one more clears pushes to 10 → level 2
+    const state = playingState({ board: boardWithAlmostFullBottom(), activePiece: piece, linesCleared: 9, level: 1 })
+    const next = gameReducer(state, { type: 'TICK' })
+    expect(next.linesCleared).toBe(10)
+    expect(next.level).toBe(2)
   })
 })
 
