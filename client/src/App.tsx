@@ -27,7 +27,7 @@ function App() {
       )}
       <Board board={displayBoard} />
       <p style={{ margin: 0, color: '#555', fontSize: '0.875rem' }}>
-        ← → move · ↑ rotate CW · Z rotate CCW · ↓ soft drop
+        ← → move · ↑ rotate CW · Z rotate CCW · ↓ soft drop · G shift gravity
       </p>
     </div>
   )

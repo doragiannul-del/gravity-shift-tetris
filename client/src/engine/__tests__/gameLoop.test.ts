@@ -169,6 +169,29 @@ describe('createInitialState', () => {
   })
 })
 
+describe('gameReducer — SHIFT_GRAVITY', () => {
+  it('cycles down → left → up → right → down', () => {
+    const dirs: Array<GameState['gravityDirection']> = ['down', 'left', 'up', 'right', 'down']
+    let state = playingState({ gravityDirection: 'down' })
+    for (let i = 1; i < dirs.length; i++) {
+      state = gameReducer(state, { type: 'SHIFT_GRAVITY' })
+      expect(state.gravityDirection).toBe(dirs[i])
+    }
+  })
+
+  it('does not change board or piece on shift', () => {
+    const state = playingState()
+    const next = gameReducer(state, { type: 'SHIFT_GRAVITY' })
+    expect(next.board).toEqual(state.board)
+    expect(next.activePiece).toEqual(state.activePiece)
+  })
+
+  it('is a no-op when status is "over"', () => {
+    const state = playingState({ status: 'over' })
+    expect(gameReducer(state, { type: 'SHIFT_GRAVITY' })).toBe(state)
+  })
+})
+
 describe('gameReducer — line clearing integration', () => {
   it('increments linesCleared when a full row is cleared on lock', () => {
     // Fill the bottom row except the cells T will occupy when it locks,

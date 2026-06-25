@@ -87,46 +87,48 @@ describe('isValidPosition', () => {
 })
 
 describe('clearLines', () => {
-  it('returns the board unchanged when no rows are full', () => {
+  // --- down gravity (original behaviour) ---
+
+  it('returns the board unchanged when no rows are full (down)', () => {
     const board = createEmptyBoard()
-    const { board: result, linesCleared } = clearLines(board)
+    const { board: result, linesCleared } = clearLines(board, 'down')
     expect(linesCleared).toBe(0)
     expect(result).toEqual(board)
   })
 
-  it('does not clear a partially filled row', () => {
+  it('does not clear a partially filled row (down)', () => {
     const board = createEmptyBoard()
-    board[BOARD_ROWS - 1][0] = '#ff0000' // only one cell filled
-    const { linesCleared } = clearLines(board)
+    board[BOARD_ROWS - 1][0] = '#ff0000'
+    const { linesCleared } = clearLines(board, 'down')
     expect(linesCleared).toBe(0)
   })
 
-  it('clears a single full row and prepends one empty row', () => {
+  it('clears a single full row and prepends one empty row at top (down)', () => {
     const board = createEmptyBoard()
     board[BOARD_ROWS - 1] = Array(BOARD_COLS).fill('#ff0000')
-    const { board: result, linesCleared } = clearLines(board)
+    const { board: result, linesCleared } = clearLines(board, 'down')
     expect(linesCleared).toBe(1)
     expect(result[0]).toEqual(Array(BOARD_COLS).fill('empty'))
     expect(result[BOARD_ROWS - 1].every(c => c === 'empty')).toBe(true)
   })
 
-  it('clears four full rows at once (Tetris)', () => {
+  it('clears four full rows at once — Tetris (down)', () => {
     const board = createEmptyBoard()
     for (let r = BOARD_ROWS - 4; r < BOARD_ROWS; r++) {
       board[r] = Array(BOARD_COLS).fill('#00f0f0')
     }
-    const { board: result, linesCleared } = clearLines(board)
+    const { board: result, linesCleared } = clearLines(board, 'down')
     expect(linesCleared).toBe(4)
     result.slice(0, 4).forEach(row =>
       expect(row).toEqual(Array(BOARD_COLS).fill('empty'))
     )
   })
 
-  it('always returns a board with BOARD_ROWS rows', () => {
+  it('always returns a board with BOARD_ROWS rows (down)', () => {
     const board = createEmptyBoard()
     board[BOARD_ROWS - 1] = Array(BOARD_COLS).fill('#ff0000')
     board[BOARD_ROWS - 2] = Array(BOARD_COLS).fill('#ff0000')
-    const { board: result } = clearLines(board)
+    const { board: result } = clearLines(board, 'down')
     expect(result.length).toBe(BOARD_ROWS)
   })
 
@@ -134,7 +136,59 @@ describe('clearLines', () => {
     const board = createEmptyBoard()
     board[BOARD_ROWS - 1] = Array(BOARD_COLS).fill('#ff0000')
     const originalRow = board[BOARD_ROWS - 1]
-    clearLines(board)
+    clearLines(board, 'down')
     expect(board[BOARD_ROWS - 1]).toBe(originalRow)
+  })
+
+  // --- up gravity ---
+
+  it('clears a full row and appends one empty row at bottom (up)', () => {
+    const board = createEmptyBoard()
+    board[0] = Array(BOARD_COLS).fill('#ff0000') // pieces land at top
+    const { board: result, linesCleared } = clearLines(board, 'up')
+    expect(linesCleared).toBe(1)
+    // Empty row appears at the bottom (ceiling for up gravity)
+    expect(result[BOARD_ROWS - 1]).toEqual(Array(BOARD_COLS).fill('empty'))
+  })
+
+  // --- left gravity ---
+
+  it('clears a full column and appends an empty column on the right (left)', () => {
+    const board = createEmptyBoard()
+    // Fill column 0 (left wall — where pieces land under left gravity)
+    for (let r = 0; r < BOARD_ROWS; r++) board[r][0] = '#ff0000'
+    const { board: result, linesCleared } = clearLines(board, 'left')
+    expect(linesCleared).toBe(1)
+    // col 0 should now be empty (shifted left), col BOARD_COLS-1 is the new empty col
+    result.forEach(row => expect(row[BOARD_COLS - 1]).toBe('empty'))
+    result.forEach(row => expect(row[0]).toBe('empty'))
+  })
+
+  it('does not clear a partially filled column (left)', () => {
+    const board = createEmptyBoard()
+    board[0][0] = '#ff0000' // only one cell in col 0
+    const { linesCleared } = clearLines(board, 'left')
+    expect(linesCleared).toBe(0)
+  })
+
+  it('always returns BOARD_ROWS rows and BOARD_COLS cols after column clear (left)', () => {
+    const board = createEmptyBoard()
+    for (let r = 0; r < BOARD_ROWS; r++) board[r][0] = '#ff0000'
+    const { board: result } = clearLines(board, 'left')
+    expect(result.length).toBe(BOARD_ROWS)
+    result.forEach(row => expect(row.length).toBe(BOARD_COLS))
+  })
+
+  // --- right gravity ---
+
+  it('clears a full column and prepends an empty column on the left (right)', () => {
+    const board = createEmptyBoard()
+    // Fill column BOARD_COLS-1 (right wall — where pieces land under right gravity)
+    for (let r = 0; r < BOARD_ROWS; r++) board[r][BOARD_COLS - 1] = '#ff0000'
+    const { board: result, linesCleared } = clearLines(board, 'right')
+    expect(linesCleared).toBe(1)
+    // col 0 is the new empty column prepended on the left
+    result.forEach(row => expect(row[0]).toBe('empty'))
+    result.forEach(row => expect(row[BOARD_COLS - 1]).toBe('empty'))
   })
 })

@@ -17,6 +17,14 @@ export type GameAction =
   | { type: 'MOVE'; direction: 'left' | 'right' }
   | { type: 'ROTATE'; direction: 'cw' | 'ccw' }
   | { type: 'SOFT_DROP' }
+  | { type: 'SHIFT_GRAVITY' }
+
+const GRAVITY_CYCLE: Record<GravityDirection, GravityDirection> = {
+  down: 'left',
+  left: 'up',
+  up: 'right',
+  right: 'down',
+}
 
 function randomPieceType() {
   return PIECE_TYPES[Math.floor(Math.random() * PIECE_TYPES.length)]
@@ -26,7 +34,7 @@ function randomPieceType() {
 // If the spawn position is already occupied, the game is over.
 function lockAndSpawn(state: GameState): GameState {
   const lockedBoard = mergePieceOnBoard(state.board, state.activePiece)
-  const { board: clearedBoard, linesCleared } = clearLines(lockedBoard)
+  const { board: clearedBoard, linesCleared } = clearLines(lockedBoard, state.gravityDirection)
   const next = spawnPiece(randomPieceType())
 
   if (!isValidPosition(clearedBoard, next)) {
@@ -72,6 +80,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return { ...state, activePiece: rotated }
       }
       return state
+    }
+
+    case 'SHIFT_GRAVITY': {
+      return { ...state, gravityDirection: GRAVITY_CYCLE[state.gravityDirection] }
     }
   }
 }

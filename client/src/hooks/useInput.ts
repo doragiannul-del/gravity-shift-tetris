@@ -23,6 +23,10 @@ export function useInput(dispatch: Dispatch) {
         case 'ArrowDown':
           dispatch({ type: 'SOFT_DROP' })
           break
+        case 'g':
+        case 'G':
+          dispatch({ type: 'SHIFT_GRAVITY' })
+          break
       }
     }
 
