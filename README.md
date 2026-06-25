@@ -67,22 +67,32 @@ npx tsc --noEmit --project client/tsconfig.json
 npx tsc --noEmit --project server/tsconfig.json
 ```
 
+## Controls
+
+| Key | Action |
+| --- | --- |
+| ← → | Move piece |
+| ↑ | Rotate clockwise |
+| Z | Rotate counter-clockwise |
+| ↓ | Soft drop |
+| G | Shift gravity direction |
+| R | Restart |
+
 ## Testing
 
-The engine layer is tested with Vitest.
+The engine layer is tested with Vitest. Server routes are tested with Vitest + supertest.
 
-Current coverage focuses on:
-
-- gravity direction vectors
-- piece rotation and wrapping
-- shape lookup
-- board merging
-- immutability guarantees
-
-Run tests:
+Coverage includes: gravity vectors, piece rotation and wrapping, board merging and immutability, collision detection, line clearing (all 4 gravity directions), game reducer (tick, move, rotate, soft drop, shift gravity, restart), scoring, level advancement, ghost piece, and leaderboard API validation.
 
 ```bash
+# Run all tests
+npm test
+
+# Client only
 npm run test --workspace=client
+
+# Server only
+npm run test --workspace=server
 ```
 
 ## Milestones
@@ -92,12 +102,9 @@ npm run test --workspace=client
 | 1 | Scaffold — Vite client + Express server | ✅ Done |
 | 2 | Static board — grid renders in React | ✅ Done |
 | 3 | Pieces + rotation — tetromino shapes, spawn, rotate | ✅ Done |
-| 4 | Standard fall — game loop tick, pieces land and lock | Pending |
-| 5 | Line clearing — detect and clear full rows | Pending |
-| 6 | Gravity shift — direction state shifts mid-game | Pending |
-| 7 | Scoring + HUD — points, level, speed scaling | Pending |
-| 8 | Server + leaderboard — scores API, persist results | Pending |
-| 9 | Polish — ghost piece, next-piece preview, game-over screen | Pending |
-
-```
-```
+| 4 | Standard fall — game loop tick, pieces land and lock | ✅ Done |
+| 5 | Line clearing — detect and clear full rows | ✅ Done |
+| 6 | Gravity shift — direction state shifts mid-game | ✅ Done |
+| 7 | Scoring + HUD — points, level, speed scaling | ✅ Done |
+| 8 | Server + leaderboard — scores API, persist results | ✅ Done |
+| 9 | Polish — ghost piece, next-piece preview, restart | ✅ Done |
