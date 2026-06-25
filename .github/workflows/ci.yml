@@ -27,3 +27,6 @@ jobs:
 
       - name: Run client tests
         run: npm run test --workspace=client
+
+      - name: Run server tests
+        run: npm run test --workspace=server
